@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace g.FIDO2
 {
@@ -21,6 +22,8 @@ namespace g.FIDO2
         public int AttStmtAlg { get; set; }
         public byte[] AttStmtSig { get; set; }
         public byte[] AttStmtX5c { get; set; }
+
+        public Dictionary<string, string> Extensions { get; set; }
     }
 
 }

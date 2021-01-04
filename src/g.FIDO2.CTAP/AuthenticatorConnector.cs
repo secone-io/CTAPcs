@@ -42,7 +42,7 @@ namespace g.FIDO2.CTAP
         {
             var ret = await ClientPINgetKeyAgreementAsync();
             if (ret.DeviceStatus != DeviceStatus.Ok || ret.CTAPResponse==null || ret.CTAPResponse.Status != 0) {
-                return new ResponseClientPIN_getPINToken(ret.DeviceStatus,ret.CTAPResponse);
+                return new ResponseClientPIN_getPINToken(ret.DeviceStatus, ret.CTAPResponse);
             }
 
             COSE_Key myKeyAgreement;
@@ -50,16 +50,16 @@ namespace g.FIDO2.CTAP
 
             var pinHashEnc = CTAPCommandClientPIN.CreatePinHashEnc(pin, sharedSecret);
 
-            return await ClientPINgetPINTokenAsync(myKeyAgreement, pinHashEnc, sharedSecret);
+            return await ClientPINgetPINTokenAsync(ret.CTAPResponse.KeyAgreement, myKeyAgreement, pinHashEnc, sharedSecret);
         }
 
         /// <summary>
         /// CTAP-Command ClientPIN - getPINToken
         /// </summary>
-        public async Task<ResponseClientPIN_getPINToken> ClientPINgetPINTokenAsync(COSE_Key keyAgreement, byte[] pinHashEnc, byte[] sharedSecret)
+        public async Task<ResponseClientPIN_getPINToken> ClientPINgetPINTokenAsync(COSE_Key keyAgreement, COSE_Key myKeyAgreement, byte[] pinHashEnc, byte[] sharedSecret)
         {
-            var ret = await sendCommandandResponseAsync(new CTAPCommandClientPIN_getPINToken(keyAgreement, pinHashEnc), new CTAPResponseClientPIN_getPINToken(sharedSecret));
-            return new ResponseClientPIN_getPINToken(ret.devSt, ret.ctapRes);
+            var ret = await sendCommandandResponseAsync(new CTAPCommandClientPIN_getPINToken(myKeyAgreement, pinHashEnc), new CTAPResponseClientPIN_getPINToken(sharedSecret));
+            return new ResponseClientPIN_getPINToken(ret.devSt, ret.ctapRes, keyAgreement);
         }
 
         /// <summary>
@@ -129,18 +129,22 @@ namespace g.FIDO2.CTAP
         public async Task<ResponseGetAssertion> GetAssertionAsync(CTAPCommandGetAssertionParam param, string pin)
         {
             byte[] pinAuth = null;
+            COSE_Key keyAgreement = null;
+
             if (!string.IsNullOrEmpty(pin)) {
                 var token = await ClientPINgetPINTokenAsync(pin);
                 if (token.DeviceStatus != DeviceStatus.Ok || token.CTAPResponse == null || token.CTAPResponse.Status != 0) {
                     return new ResponseGetAssertion(token.DeviceStatus, token.CTAPResponse);
                 }
 
+                //Get public key here
+                keyAgreement = token.KeyAgreementPublicKey;
+
                 pinAuth = CTAPCommandClientPIN.CreatePinAuth(param.ClientDataHash, token.CTAPResponse.PinToken);
                 if (pinAuth == null) {
                     return new ResponseGetAssertion(token.DeviceStatus, token.CTAPResponse);
                 }
             }
-
 
             var ret = await sendCommandandResponseAsync(new CTAPCommandGetAssertion(param, pinAuth), new CTAPResponseGetAssertion());
             return new ResponseGetAssertion(ret.devSt,ret.ctapRes);

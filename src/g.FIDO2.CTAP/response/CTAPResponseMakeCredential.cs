@@ -94,6 +94,9 @@ namespace g.FIDO2.CTAP
                         Attestation.CredentialPublicKeyByte = cbors[0].EncodeToBytes();
                     }
                 }
+
+                //TODO: parse extensions response
+
             } catch (Exception ex) {
                 Logger.Err(ex, "parseAuthData");
             }

@@ -252,7 +252,9 @@ namespace Test01
         {
             addLog("<GetInfo>");
             var res = await con.GetInfoAsync();
+
             LogResponse(res.DeviceStatus, res.CTAPResponse);
+            if (res.CTAPResponse.Extensions.Contains("hmac-secret")) addLog("-- Device supports hmac-secret --");
         }
 
         private async void ButtonClientPINgetRetries_Click(object sender, RoutedEventArgs e)
@@ -329,6 +331,7 @@ namespace Test01
             param.UserDisplayName = "testUserDisplayName";
             param.Option_rk = false;
             param.Option_uv = true;
+            param.Extensions = new Dictionary<string, bool> { { "mac-secret", true } };
 
             string pin = "";
 

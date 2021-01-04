@@ -11,9 +11,9 @@ namespace g.FIDO2.CTAP
     {
         public enum OptionFlag
         {
-            absent,                             // 未対応
-            present_and_set_to_false,           // 未設定
-            present_and_set_to_true,            // 設定済み
+            absent,                             // 未対応 | Not compatible
+            present_and_set_to_false,           // 未設定 | Not set
+            present_and_set_to_true,            // 設定済み | Pre-configured
         };
 
         public string[] Versions { get; private set; }

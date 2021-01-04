@@ -17,10 +17,11 @@ namespace g.FIDO2.CTAP
         public bool Option_rk { get; set; }
         public bool Option_uv { get; set; }
         public byte[] ClientDataHash { get; set; }
+        public Dictionary<string, bool> Extensions { get; set; }
 
         public CTAPCommandMakeCredentialParam(string rpid, byte[] challenge,byte[] userid=null)
         {
-            if(rpid != null) this.RpId = rpid;
+            if (rpid != null) this.RpId = rpid;
             if(challenge != null) this.ClientDataHash = Common.CreateClientDataHash(challenge);
             if(userid != null) this.UserId = userid.ToArray();
         }
@@ -31,7 +32,7 @@ namespace g.FIDO2.CTAP
         private CTAPCommandMakeCredentialParam param { get; set; }
         private byte[] pinAuth { get; set; }
 
-        public CTAPCommandMakeCredential(CTAPCommandMakeCredentialParam param,byte[] pinAuth)
+        public CTAPCommandMakeCredential(CTAPCommandMakeCredentialParam param, byte[] pinAuth)
         {
             this.param = param;
             if(pinAuth!=null) this.pinAuth = pinAuth.ToArray();
@@ -77,6 +78,16 @@ namespace g.FIDO2.CTAP
                 pubKeyCredParams.Add("alg", -7);
                 pubKeyCredParams.Add("type", "public-key");
                 cbor.Add(0x04, CBORObject.NewArray().Add(pubKeyCredParams));
+            }
+
+            // 0x06 : extensions
+            if (param.Extensions != null)
+            {
+                var ext = CBORObject.NewMap();
+
+                foreach (var de in param.Extensions) ext.Add(de.Key, de.Value);
+                
+                cbor.Add(0x06, ext);
             }
 
             // 0x07 : options

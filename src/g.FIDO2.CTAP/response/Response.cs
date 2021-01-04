@@ -66,7 +66,16 @@ namespace g.FIDO2.CTAP
     public class ResponseClientPIN_getPINToken : ResponseBase
     {
         public CTAPResponseClientPIN_getPINToken CTAPResponse { get; private set; }
-        public ResponseClientPIN_getPINToken(DeviceStatus devst, CTAPResponse ctapres) : base(devst, ctapres) { this.CTAPResponse = ctapres as CTAPResponseClientPIN_getPINToken; }
+        public COSE_Key KeyAgreementPublicKey { get; private set; }
+        public ResponseClientPIN_getPINToken(DeviceStatus devst, CTAPResponse ctapres) : base(devst, ctapres) 
+        { 
+            this.CTAPResponse = ctapres as CTAPResponseClientPIN_getPINToken; 
+        }
+        public ResponseClientPIN_getPINToken(DeviceStatus devst, CTAPResponse ctapres, COSE_Key key) : base(devst, ctapres)
+        {
+            this.KeyAgreementPublicKey = key;
+            this.CTAPResponse = ctapres as CTAPResponseClientPIN_getPINToken;
+        }
     }
 
     public class ResponseGetAssertion : ResponseBase

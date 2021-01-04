@@ -14,6 +14,7 @@ namespace g.FIDO2.CTAP
         public byte[] AllowList_CredentialId { get; set; }
         public bool Option_up { get; set; }
         public bool Option_uv { get; set; }
+        public bool UseHmacExtension { get; set; }
 
         public CTAPCommandGetAssertionParam(string rpid,byte[] challenge,byte[] credentialid=null)
         {
@@ -27,11 +28,19 @@ namespace g.FIDO2.CTAP
     {
         private CTAPCommandGetAssertionParam param { get; set; }
         private byte[] pinAuth { get; set; }
+        private COSE_Key keyAgreement { get; set; }
 
         public CTAPCommandGetAssertion(CTAPCommandGetAssertionParam param, byte[] pinAuth)
         {
             this.param = param;
             this.pinAuth = pinAuth?.ToArray();
+        }
+
+        public CTAPCommandGetAssertion(CTAPCommandGetAssertionParam param, byte[] pinAuth, COSE_Key keyAgreement)
+        {
+            this.param = param;
+            this.pinAuth = pinAuth?.ToArray();
+            this.keyAgreement = keyAgreement;
         }
 
         public override byte[] CreatePayload()
@@ -50,6 +59,18 @@ namespace g.FIDO2.CTAP
                 pubKeyCredParams.Add("id", param.AllowList_CredentialId);
                 pubKeyCredParams.Add("type", "public-key");
                 cbor.Add(0x03, CBORObject.NewArray().Add(pubKeyCredParams));
+            }
+
+            // 0x04 : extensions
+            if (param.UseHmacExtension && this.keyAgreement != null)
+            {
+                var extensions = CBORObject.NewMap();
+                var hmac = CBORObject.NewMap();
+
+                hmac.Add(0x01, new byte[]);
+
+
+                extensions.Add("hmac-secret", hmac);
             }
 
             // 0x05 : options
