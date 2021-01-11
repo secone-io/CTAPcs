@@ -26,6 +26,7 @@
         <Label Content="PIN" HorizontalAlignment="Left" Margin="200,10,0,0" VerticalAlignment="Top"/>
         <TextBox x:Name="textBoxPIN" HorizontalAlignment="Left" Height="23" Margin="235,13,0,0" TextWrapping="Wrap" Text="1234" VerticalAlignment="Top" Width="120"/>
         <CheckBox x:Name="checkBoxRK" Content="Resident Key" HorizontalAlignment="Left" Margin="378,17,0,0" VerticalAlignment="Top"/>
+        <CheckBox x:Name="checkBoxHmacSecret" Content="Use Hmac Secret" HorizontalAlignment="Left" Margin="484,17,0,0" VerticalAlignment="Top"/>
 
     </Grid>
 </Window>

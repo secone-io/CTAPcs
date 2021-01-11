@@ -295,6 +295,8 @@ namespace Test01
             param.Option_up = false;
             param.Option_uv = true;
 
+            //param.UseHmacExtension = true;
+
             //var res = await con.GetAssertion(param);
             var res = await con.GetAssertionAsync(param, "");
             LogResponse(res.DeviceStatus, res.CTAPResponse);
@@ -331,7 +333,7 @@ namespace Test01
             param.UserDisplayName = "testUserDisplayName";
             param.Option_rk = false;
             param.Option_uv = true;
-            param.Extensions = new Dictionary<string, bool> { { "mac-secret", true } };
+            //param.Extensions = new Dictionary<string, bool> { { "hmac-secret", true } };
 
             string pin = "";
 

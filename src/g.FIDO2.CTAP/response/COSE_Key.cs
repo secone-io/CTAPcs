@@ -39,6 +39,21 @@ namespace g.FIDO2.CTAP
             Y = Common.HexStringToBytes(y);
         }
 
+        public CBORObject ToCbor()
+        {
+            var cbor = CBORObject.NewMap();
+
+            cbor.Add(1, Kty);
+            cbor.Add(3, Alg);
+
+            cbor.Add(-1, Crv);
+            cbor.Add(-2, X);
+            cbor.Add(-3, Y);
+
+            return cbor;
+
+        }
+
         internal void parseCOSEkey(CBORObject cbor)
         {
             var attestationStatement = cbor.ToJSONString();
@@ -59,7 +74,6 @@ namespace g.FIDO2.CTAP
                     Y = cbor[key].GetByteString();
                 }
             }
-
         }
 
 

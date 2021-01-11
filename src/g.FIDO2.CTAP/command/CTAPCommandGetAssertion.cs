@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using PeterO.Cbor;
@@ -29,6 +30,15 @@ namespace g.FIDO2.CTAP
         private CTAPCommandGetAssertionParam param { get; set; }
         private byte[] pinAuth { get; set; }
         private COSE_Key keyAgreement { get; set; }
+        
+        //temp - for testing purposes only
+        private static readonly byte[] salt = {
+            0x78, 0x1c, 0x78, 0x60, 0xad, 0x88, 0xd2, 0x63,
+            0x32, 0x62, 0x2a, 0xf1, 0x74, 0x5d, 0xed, 0xb2,
+            0xe7, 0xa4, 0x2b, 0x44, 0x89, 0x29, 0x39, 0xc5,
+            0x56, 0x64, 0x01, 0x27, 0x0d, 0xbb, 0xc4, 0x49,
+        };
+
 
         public CTAPCommandGetAssertion(CTAPCommandGetAssertionParam param, byte[] pinAuth)
         {
@@ -67,10 +77,29 @@ namespace g.FIDO2.CTAP
                 var extensions = CBORObject.NewMap();
                 var hmac = CBORObject.NewMap();
 
-                hmac.Add(0x01, new byte[]);
+                //The platform gets sharedSecret from the authenticator.
+                //byte[] bG_x, bG_y;
+                //var sharedSecret = ECDH.CreateSharedSecret(keyAgreement.X, keyAgreement.Y, out bG_x, out bG_y);
 
+                COSE_Key myKeyAgreement;
+                var sharedSecret = CTAPCommandClientPIN.CreateSharedSecret(this.keyAgreement, out myKeyAgreement);
+
+                //keyAgreement(0x01): public key of platformKeyAgreementKey, "bG".
+                hmac.Add(0x01, myKeyAgreement.ToCbor());
+
+                //saltEnc(0x02): Encrypt one or two salts(Called salt1(32 bytes) and salt2(32 bytes))
+                var saltEnc = AES256CBC.Encrypt(sharedSecret, salt);
+                hmac.Add(0x02, saltEnc);
+
+                //saltAuth(0x03): LEFT(HMAC-SHA-256(sharedSecret, saltEnc), 16).
+                using (var hmacsha256 = new HMACSHA256(sharedSecret))
+                {
+                    var dgst = hmacsha256.ComputeHash(saltEnc);
+                    hmac.Add(0x03, dgst.ToList().Take(16).ToArray());
+                }
 
                 extensions.Add("hmac-secret", hmac);
+                cbor.Add(0x04, extensions);
             }
 
             // 0x05 : options

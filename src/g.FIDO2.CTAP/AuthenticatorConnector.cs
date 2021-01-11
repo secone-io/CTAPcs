@@ -146,7 +146,7 @@ namespace g.FIDO2.CTAP
                 }
             }
 
-            var ret = await sendCommandandResponseAsync(new CTAPCommandGetAssertion(param, pinAuth), new CTAPResponseGetAssertion());
+            var ret = await sendCommandandResponseAsync(new CTAPCommandGetAssertion(param, pinAuth, keyAgreement), new CTAPResponseGetAssertion());
             return new ResponseGetAssertion(ret.devSt,ret.ctapRes);
         }
 

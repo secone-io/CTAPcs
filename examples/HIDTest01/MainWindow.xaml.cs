@@ -102,9 +102,15 @@ namespace HIDTest01
                 creid = g.FIDO2.Common.HexStringToBytes(textBoxCreID.Text);
             }
 
-            var param = new g.FIDO2.CTAP.CTAPCommandGetAssertionParam(rpid, challenge,creid);
+            var param = new g.FIDO2.CTAP.CTAPCommandGetAssertionParam(rpid, challenge, creid);
             param.Option_up = true;
             param.Option_uv = false;
+
+            //Include the hmac-secret extension in the assertion
+            if (this.checkBoxHmacSecret.IsChecked.HasValue && this.checkBoxHmacSecret.IsChecked.Value)
+            { 
+                param.UseHmacExtension = true;
+            }
 
             string pin = this.textBoxPIN.Text;
 
@@ -124,14 +130,20 @@ namespace HIDTest01
             addLog("<makeCredential>");
 
             var rpid = this.textBoxRPID.Text;
-            var challenge = System.Text.Encoding.ASCII.GetBytes("this is challenge");
-            var userid = System.Text.Encoding.ASCII.GetBytes("12345");
+            var challenge = Encoding.ASCII.GetBytes("this is challenge");
+            var userid = Encoding.ASCII.GetBytes("12345");
 
             var param = new g.FIDO2.CTAP.CTAPCommandMakeCredentialParam(rpid,challenge,userid);
             param.Option_rk = (bool)this.checkBoxRK.IsChecked;
             param.Option_uv = false;
             param.UserName = "user";
             param.UserDisplayName = "DispUser";
+            
+            //Request the hmac secret extension for this credential
+            if (this.checkBoxHmacSecret.IsChecked.HasValue && this.checkBoxHmacSecret.IsChecked.Value)
+            {
+                param.Extensions = new Dictionary<string, bool> {{"hmac-secret", true}};
+            }
 
             string pin = this.textBoxPIN.Text;
             var res = await con.MakeCredentialAsync(param, pin);
