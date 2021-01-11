@@ -152,30 +152,14 @@ namespace g.FIDO2.CTAP
             var ret = await sendCommandandResponseAsync(new CTAPCommandGetAssertion(param, pinAuth, myKeyAgreement, sharedSecret), ctapResponseGetAssertion);
 
             //Resolve the hmac-secret extension
-            if (param.UseHmacExtension && ctapResponseGetAssertion.Assertion.ExtensionData?.Length > 0 )
+            if (param.UseHmacExtension && ctapResponseGetAssertion.Assertion.ExtensionData?.Length > 0)
             {
                 var data = ctapResponseGetAssertion.Assertion.ExtensionData;
-                var index = 0;
+                var decoded = AES256CBC.Decrypt(sharedSecret, data.ToArray());
 
-                while (index < data.Length)
-                {
-                    try
-                    {
-                        var decoded = AES256CBC.Decrypt(sharedSecret, data.Skip(index).ToArray());
-                        
-                        Logger.Log($"GOT SYMMETRIC KEY: {decoded.ToHexString()} AT INDEX: {index}");
-                        break;
-                    }
-                    catch
-                    {
-
-                    }
-
-                    index++;
-                    if (index == data.Length) Logger.Log($"COULD NOT DECRYPT");
-                }
+                Logger.Log($"GOT SYMMETRIC KEY: {decoded.ToHexString()}");
             }
-
+                
             return new ResponseGetAssertion(ret.devSt, ret.ctapRes);
         }
 

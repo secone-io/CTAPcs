@@ -69,7 +69,10 @@ namespace g.FIDO2.CTAP
                     index = index + 4;
                 }
 
-                //Try decrypt the remaining data
+                //Skip 15 bytes.
+                index = index + 15;
+
+                //Return the extension data
                 Assertion.ExtensionData = data.Skip(index).ToArray();
 
             } catch (Exception ex) {

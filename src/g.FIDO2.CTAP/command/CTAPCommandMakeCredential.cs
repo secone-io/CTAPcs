@@ -91,10 +91,12 @@ namespace g.FIDO2.CTAP
             }
 
             // 0x07 : options
+            if (param.Option_rk || param.Option_uv)
             {
                 var opt = CBORObject.NewMap();
-                opt.Add("rk", param.Option_rk);
-                opt.Add("uv", param.Option_uv);
+                if (param.Option_rk) opt.Add("rk", param.Option_rk);
+                if (param.Option_uv) opt.Add("uv", param.Option_uv);
+                
                 cbor.Add(0x07, opt);
             }
 
