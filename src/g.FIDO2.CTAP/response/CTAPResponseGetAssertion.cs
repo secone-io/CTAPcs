@@ -45,8 +45,6 @@ namespace g.FIDO2.CTAP
 
         private void parseAuthData(byte[] data)
         {
-            Logger.Log($"GOT EXTENSION DATA: {data.ToHexString()}");
-
             try {
                 int index = 0;
 
@@ -54,39 +52,25 @@ namespace g.FIDO2.CTAP
                 Assertion.RpIdHash = data.Skip(index).Take(32).ToArray();
                 index = index + 32;
 
-                Logger.Log($"GOT RPIDHASH VALUE: {Assertion.RpIdHash.ToHexString()}");
-
                 // flags(1)
                 {
                     byte flags = data[index];
-
-                    Logger.Log($"GOT FLAGS BYTE: {flags}");
 
                     index++;
                     Assertion.Flags_UserPresentResult = Common.GetBit(flags, 0);
                     Assertion.Flags_UserVerifiedResult = Common.GetBit(flags, 2);
                     Assertion.Flags_AttestedCredentialDataIncluded = Common.GetBit(flags, 6);
                     Assertion.Flags_ExtensionDataIncluded = Common.GetBit(flags, 7);
-
-                    Logger.Log($"GOT EXTENSION DATA INCLUDED: {Assertion.Flags_ExtensionDataIncluded}");
                 }
 
                 // signCount(4)
                 {
                     Assertion.SignCount = Common.ToInt32(data, index, true);
                     index = index + 4;
-                    
-                    Logger.Log($"GOT SIGNCOUNT VALUE: {Assertion.SignCount}");
-
                 }
 
-                // aaguid	16
-                Assertion.Aaguid = data.Skip(index).Take(16).ToArray();
-                index = index + 16;
-
-                Logger.Log($"GOT AAGUID VALUE: {Assertion.Aaguid.ToHexString()}");
-
-                Logger.Log($"REMAINING EXTENSION DATA: {data.Skip(index).ToArray().ToHexString()}");
+                //Try decrypt the remaining data
+                Assertion.ExtensionData = data.Skip(index).ToArray();
 
             } catch (Exception ex) {
                 Logger.Err(ex, "parseAuthData");

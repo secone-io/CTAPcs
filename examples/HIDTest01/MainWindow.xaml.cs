@@ -35,8 +35,8 @@ namespace HIDTest01
 
         private void OnKeepAlive(object sender, EventArgs e)
         {
-            addLog($"<OnKeppAlive>");
-            addLog($"- touch authenticator!");
+            //addLog($"<OnKeppAlive>");
+            //addLog($"- touch authenticator!");
         }
 
         HIDAuthenticatorConnector con;
@@ -54,7 +54,7 @@ namespace HIDTest01
             var res = await con.GetInfoAsync();
             LogResponse(res.DeviceStatus,res.CTAPResponse);
             if(res.DeviceStatus == g.FIDO2.CTAP.DeviceStatus.Unauthorized) {
-                addLog("Excute Administrator ?");
+                addLog("Execute Administrator ?");
                 return;
             } else if (res.DeviceStatus == g.FIDO2.CTAP.DeviceStatus.NotConnected) {
                 addLog("FIDO Key Not Connected");

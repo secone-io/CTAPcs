@@ -24,6 +24,8 @@ namespace g.FIDO2
         public byte[] AuthData { get; set; }
 
         public byte[] CredentialId { get; set; }
+
+        public byte[] ExtensionData { get; set; }
     }
 }
 

@@ -30,6 +30,7 @@ namespace g.FIDO2.CTAP
         private CTAPCommandGetAssertionParam param { get; set; }
         private byte[] pinAuth { get; set; }
         private COSE_Key keyAgreement { get; set; }
+        private byte[] sharedSecret { get; set; }
         
         //temp - for testing purposes only
         private static readonly byte[] salt = {
@@ -46,11 +47,12 @@ namespace g.FIDO2.CTAP
             this.pinAuth = pinAuth?.ToArray();
         }
 
-        public CTAPCommandGetAssertion(CTAPCommandGetAssertionParam param, byte[] pinAuth, COSE_Key keyAgreement)
+        public CTAPCommandGetAssertion(CTAPCommandGetAssertionParam param, byte[] pinAuth, COSE_Key keyAgreement, byte[] sharedSecret)
         {
             this.param = param;
             this.pinAuth = pinAuth?.ToArray();
             this.keyAgreement = keyAgreement;
+            this.sharedSecret = sharedSecret;
         }
 
         public override byte[] CreatePayload()
@@ -77,15 +79,8 @@ namespace g.FIDO2.CTAP
                 var extensions = CBORObject.NewMap();
                 var hmac = CBORObject.NewMap();
 
-                //The platform gets sharedSecret from the authenticator.
-                //byte[] bG_x, bG_y;
-                //var sharedSecret = ECDH.CreateSharedSecret(keyAgreement.X, keyAgreement.Y, out bG_x, out bG_y);
-
-                COSE_Key myKeyAgreement;
-                var sharedSecret = CTAPCommandClientPIN.CreateSharedSecret(this.keyAgreement, out myKeyAgreement);
-
                 //keyAgreement(0x01): public key of platformKeyAgreementKey, "bG".
-                hmac.Add(0x01, myKeyAgreement.ToCbor());
+                hmac.Add(0x01, keyAgreement.ToCbor());
 
                 //saltEnc(0x02): Encrypt one or two salts(Called salt1(32 bytes) and salt2(32 bytes))
                 var saltEnc = AES256CBC.Encrypt(sharedSecret, salt);

@@ -110,7 +110,7 @@ namespace g.FIDO2.CTAP
             //  AES256-CBC(sharedSecret, IV = 0, LEFT(SHA-256(curPin), 16)).
             var pinHashEnc = CTAPCommandClientPIN.CreatePinHashEnc(currentpin, sharedSecret);
 
-            var ret2 = await sendCommandandResponseAsync(new CTAPCommandClientPIN_changePIN(myKeyAgreement, pinAuth,newPinEnc,pinHashEnc), new CTAPResponseClientPIN());
+            var ret2 = await sendCommandandResponseAsync(new CTAPCommandClientPIN_changePIN(myKeyAgreement, pinAuth, newPinEnc, pinHashEnc), new CTAPResponseClientPIN());
             return new ResponseClientPIN(ret2.devSt,ret2.ctapRes);
         }
 
@@ -120,7 +120,7 @@ namespace g.FIDO2.CTAP
         public async Task<ResponseGetAssertion> GetAssertionAsync(CTAPCommandGetAssertionParam param, byte[] pinAuth = null)
         {
             var ret = await sendCommandandResponseAsync(new CTAPCommandGetAssertion(param, pinAuth), new CTAPResponseGetAssertion());
-            return new ResponseGetAssertion(ret.devSt,ret.ctapRes);
+            return new ResponseGetAssertion(ret.devSt, ret.ctapRes);
         }
 
         /// <summary>
@@ -129,25 +129,54 @@ namespace g.FIDO2.CTAP
         public async Task<ResponseGetAssertion> GetAssertionAsync(CTAPCommandGetAssertionParam param, string pin)
         {
             byte[] pinAuth = null;
-            COSE_Key keyAgreement = null;
+            byte[] sharedSecret = null;
+            COSE_Key myKeyAgreement = null;
 
             if (!string.IsNullOrEmpty(pin)) {
                 var token = await ClientPINgetPINTokenAsync(pin);
+
                 if (token.DeviceStatus != DeviceStatus.Ok || token.CTAPResponse == null || token.CTAPResponse.Status != 0) {
                     return new ResponseGetAssertion(token.DeviceStatus, token.CTAPResponse);
                 }
 
-                //Get public key here
-                keyAgreement = token.KeyAgreementPublicKey;
-
+                //The platform gets sharedSecret from the authenticator.
+                sharedSecret = CTAPCommandClientPIN.CreateSharedSecret(token.KeyAgreementPublicKey, out myKeyAgreement);
                 pinAuth = CTAPCommandClientPIN.CreatePinAuth(param.ClientDataHash, token.CTAPResponse.PinToken);
+                
                 if (pinAuth == null) {
                     return new ResponseGetAssertion(token.DeviceStatus, token.CTAPResponse);
                 }
             }
 
-            var ret = await sendCommandandResponseAsync(new CTAPCommandGetAssertion(param, pinAuth, keyAgreement), new CTAPResponseGetAssertion());
-            return new ResponseGetAssertion(ret.devSt,ret.ctapRes);
+            var ctapResponseGetAssertion = new CTAPResponseGetAssertion();
+            var ret = await sendCommandandResponseAsync(new CTAPCommandGetAssertion(param, pinAuth, myKeyAgreement, sharedSecret), ctapResponseGetAssertion);
+
+            //Resolve the hmac-secret extension
+            if (param.UseHmacExtension && ctapResponseGetAssertion.Assertion.ExtensionData?.Length > 0 )
+            {
+                var data = ctapResponseGetAssertion.Assertion.ExtensionData;
+                var index = 0;
+
+                while (index < data.Length)
+                {
+                    try
+                    {
+                        var decoded = AES256CBC.Decrypt(sharedSecret, data.Skip(index).ToArray());
+                        
+                        Logger.Log($"GOT SYMMETRIC KEY: {decoded.ToHexString()} AT INDEX: {index}");
+                        break;
+                    }
+                    catch
+                    {
+
+                    }
+
+                    index++;
+                    if (index == data.Length) Logger.Log($"COULD NOT DECRYPT");
+                }
+            }
+
+            return new ResponseGetAssertion(ret.devSt, ret.ctapRes);
         }
 
         /// <summary>
